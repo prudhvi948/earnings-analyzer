@@ -14,7 +14,7 @@ import os
 plt.style.use("dark_background")
 
 class EarningsApp:
-    def __init__(self, root):
+    def __init__(self, root, ticker=None):
         self.root = root
         root.title("Earnings Gap Analyzer")
         root.geometry("1100x850")
@@ -35,7 +35,7 @@ class EarningsApp:
         self.ticker_entry = tk.Entry(frame, font=("Segoe UI", 12), width=10, bg="#161b22",
                                        fg="white", insertbackground="white", relief=tk.FLAT,
                                        highlightthickness=1, highlightbackground="#30363d")
-        self.ticker_entry.insert(0, "NVDA")
+        self.ticker_entry.insert(0, (ticker or "NVDA").upper())
         self.ticker_entry.pack(side=tk.LEFT, padx=5)
 
         self.run_btn = tk.Button(frame, text="Run Analysis", font=("Segoe UI", 11, "bold"),
@@ -266,6 +266,13 @@ class EarningsApp:
         canvas = FigureCanvasTkAgg(fig, self.chart_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+
+def open_in_window(ticker):
+    win = tk.Toplevel()
+    EarningsApp(win, ticker=ticker)
+    return win
+
 
 if __name__ == "__main__":
     root = tk.Tk()
