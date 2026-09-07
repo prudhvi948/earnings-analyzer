@@ -1,5 +1,5 @@
-import calendar as cal
 import json
+import sys
 import threading
 import time
 import tkinter as tk
@@ -55,14 +55,6 @@ def load_watchlist(path=WATCHLIST_PATH):
         if t and t not in tickers:
             tickers.append(t)
     return tickers
-
-
-def add_one_month(d):
-    year, month = d.year, d.month + 1
-    if month > 12:
-        year, month = year + 1, 1
-    day = min(d.day, cal.monthrange(year, month)[1])
-    return date(year, month, day)
 
 
 def earnings_dates_upcoming(ticker):
@@ -208,7 +200,7 @@ def save_cached_scan(results):
 
 
 class EarningsCalendarApp:
-    def __init__(self, root):
+    def __init__(self, root, days=30):
         self.root = root
         root.title("Earnings Calendar")
         root.geometry("1400x900")
@@ -227,6 +219,14 @@ class EarningsCalendarApp:
                                    highlightbackground=BORDER)
         self.date_entry.insert(0, date.today().strftime("%Y-%m-%d"))
         self.date_entry.pack(side=tk.LEFT, padx=5)
+
+        tk.Label(bar, text="Days:", font=("Segoe UI", 11), fg=MUTED, bg=BG)\
+            .pack(side=tk.LEFT, padx=(10, 5))
+        self.days_entry = tk.Entry(bar, font=("Segoe UI", 11), width=5, bg=PANEL, fg=FG,
+                                   insertbackground=FG, relief=tk.FLAT, highlightthickness=1,
+                                   highlightbackground=BORDER)
+        self.days_entry.insert(0, str(days))
+        self.days_entry.pack(side=tk.LEFT, padx=5)
 
         self.load_btn = tk.Button(bar, text="Load Calendar", font=("Segoe UI", 11, "bold"),
                                   bg=ACCENT, fg=FG, padx=15, relief=tk.FLAT,
@@ -287,7 +287,14 @@ class EarningsCalendarApp:
         except ValueError:
             messagebox.showerror("Error", "Enter the start date as YYYY-MM-DD")
             return
-        end = add_one_month(start)
+        try:
+            days = int(self.days_entry.get().strip())
+            if days <= 0:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror("Error", "Enter Days as a positive number")
+            return
+        end = start + timedelta(days=days)
         include_value = self.value_var.get()
         self.load_btn.config(state=tk.DISABLED, text="Loading...")
         threading.Thread(target=self._fetch_all, args=(start, end, include_value),
@@ -435,6 +442,12 @@ class EarningsCalendarApp:
 
 
 if __name__ == "__main__":
+    days = 30
+    if len(sys.argv) > 1:
+        try:
+            days = int(sys.argv[1])
+        except ValueError:
+            pass
     root = tk.Tk()
-    app = EarningsCalendarApp(root)
+    app = EarningsCalendarApp(root, days=days)
     root.mainloop()
